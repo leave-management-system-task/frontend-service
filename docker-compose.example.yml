@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
+      - NEXT_PUBLIC_LEAVE_SERVICE_URL=http://localhost:8081/api/leave
+      - NEXT_PUBLIC_USERS_SERVICE_URL=http://localhost:8080/api/users
+    restart: unless-stopped
+    networks:
+      - lms-network
+
+networks:
+  lms-network:
+    driver: bridge
