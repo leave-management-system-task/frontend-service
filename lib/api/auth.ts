@@ -104,7 +104,7 @@ function mapApiUserToUser(apiUser: ApiLoginResponseData["user"]): User {
     firstName,
     lastName,
     role,
-    twoFactorEnabled: false, 
+    twoFactorEnabled: false
   };
 }
 
