@@ -65,9 +65,8 @@ export default function TwoFactorSetup() {
 
     setVerifying(true);
     try {
-      const response = await authService.verifyAndEnableTwoFactor(
-        verificationCode
-      );
+      const response =
+        await authService.verifyAndEnableTwoFactor(verificationCode);
       if (response.enabled) {
         setEnabled(true);
         setQrCodeUrl("");
@@ -173,9 +172,7 @@ export default function TwoFactorSetup() {
               to complete setup.
             </p>
             <div className="space-y-2">
-              <Label htmlFor="verificationCode">
-                Verification Code
-              </Label>
+              <Label htmlFor="verificationCode">Verification Code</Label>
               <Input
                 id="verificationCode"
                 type="text"

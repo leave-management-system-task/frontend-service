@@ -270,7 +270,7 @@ export const leaveService = {
 
   async getLeaveRequestById(id: string): Promise<LeaveApplication> {
     const response = await api.get<ApiResponse<LeaveRequestResponseDTO>>(
-      `/api/leave-requests/${id}`
+      `/leave-requests/${id}`
     );
     return mapLeaveRequestResponse(response.data.data);
   },
@@ -286,7 +286,7 @@ export const leaveService = {
     if (data.document) formData.append("document", data.document);
 
     const response = await api.post<ApiResponse<LeaveRequestResponseDTO>>(
-      "/api/leave-requests",
+      "/leave-requests",
       formData,
       {
         headers: {

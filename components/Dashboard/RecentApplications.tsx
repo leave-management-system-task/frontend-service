@@ -56,7 +56,10 @@ export default function RecentApplications({
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <p className="font-medium">
-                      {app.leaveTypeName || (app.leaveType ? app.leaveType.replace(/_/g, " ").toLowerCase() : "N/A")}
+                      {app.leaveTypeName ||
+                        (app.leaveType
+                          ? app.leaveType.replace(/_/g, " ").toLowerCase()
+                          : "N/A")}
                     </p>
                     <p className="text-sm text-[var(--color-muted-foreground)]">
                       {formatDate(app.startDate)} - {formatDate(app.endDate)}

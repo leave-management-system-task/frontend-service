@@ -73,51 +73,110 @@ export default function DashboardPage() {
     return null;
   }
 
+  const isAdmin = user.role === "ADMIN";
+  const isManager = user.role === "MANAGER";
+  const isStaff = user.role === "STAFF";
+
   return (
     <Layout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">Welcome back, {user.firstName}!</p>
+      <div className="space-y-8">
+        {/* Welcome Section */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 p-8 text-white shadow-xl">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold mb-2">
+              Welcome back, {user.firstName}! 👋
+            </h1>
+            <p className="text-orange-100 text-lg">
+              {isAdmin
+                ? "Manage leave requests and system settings"
+                : isManager
+                  ? "Review leave requests and manage your team"
+                  : "Track your leave balance and manage your requests"}
+            </p>
+          </div>
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {leaveBalances.map((balance) => (
-            <LeaveBalanceCard key={balance.id || balance.leaveTypeId} balance={balance} />
-          ))}
-        </div>
+        {/* Leave Balances - Only show for Staff and Managers */}
+        {!isAdmin && leaveBalances.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">
+              Your Leave Balances
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {leaveBalances.map((balance) => (
+                <LeaveBalanceCard
+                  key={balance.id || balance.leaveTypeId}
+                  balance={balance}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecentApplications applications={recentApplications} />
+          {/* Recent Applications - Only show for Staff and Managers */}
+          {!isAdmin && <RecentApplications applications={recentApplications} />}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+          {/* Quick Actions */}
+          <Card className="border-slate-200 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
+              <CardTitle className="text-xl font-semibold text-slate-800">
+                Quick Actions
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button asChild className="w-full">
-                <Link href="/leave/apply">Apply for Leave</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/leave/my">View My Applications</Link>
-              </Button>
-              {(user.role === "MANAGER" || user.role === "ADMIN") && (
+            <CardContent className="space-y-3 pt-6">
+              {!isAdmin && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-slate-300 hover:bg-slate-50"
+                >
+                  <Link href="/leave/my">View My Applications</Link>
+                </Button>
+              )}
+              {(isManager || isAdmin) && (
                 <Button
                   asChild
                   variant="default"
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-md"
                 >
                   <Link href="/leave/approvals">Pending Approvals</Link>
                 </Button>
+              )}
+              {isAdmin && (
+                <>
+                  <Button
+                    asChild
+                    variant="default"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md"
+                  >
+                    <Link href="/admin">Admin Panel</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full border-slate-300 hover:bg-slate-50"
+                  >
+                    <Link href="/admin/public-holidays">
+                      Manage Public Holidays
+                    </Link>
+                  </Button>
+                </>
               )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ColleaguesOnLeave />
-          <PublicHolidays />
-        </div>
+        {/* Additional Sections - Only show for Staff and Managers */}
+        {!isAdmin && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ColleaguesOnLeave />
+            <PublicHolidays />
+          </div>
+        )}
       </div>
     </Layout>
   );

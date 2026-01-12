@@ -94,14 +94,13 @@ export default function TwoFactorVerificationModal({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={handleCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleVerify} disabled={loading || code.length !== 6}>
+          <Button
+            onClick={handleVerify}
+            disabled={loading || code.length !== 6}
+          >
             {loading ? "Verifying..." : "Verify"}
           </Button>
         </DialogFooter>
@@ -109,4 +108,3 @@ export default function TwoFactorVerificationModal({
     </Dialog>
   );
 }
-

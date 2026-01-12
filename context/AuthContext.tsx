@@ -63,14 +63,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       twoFactorCode,
     });
-    
+
     // If 2FA is required but no code provided, return flag to show modal
     if (response.requiresTwoFactor && !twoFactorCode) {
       setPending2FA(true);
       setPendingEmail(email);
       return { requiresTwoFactor: true, userEmail: email };
     }
-    
+
     // If 2FA was provided and login succeeded
     if (response.user) {
       setUser(response.user);
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPendingEmail("");
       return { requiresTwoFactor: false };
     }
-    
+
     throw new Error("Login failed: No user data received");
   };
 
@@ -102,14 +102,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (
     email: string,
     password: string,
-    firstName: string,
-    lastName: string
+    fullName: string,
+    phoneNumber: string
   ) => {
     const response = await authService.register({
       email,
       password,
-      firstName,
-      lastName,
+      fullName,
+      phoneNumber,
     });
     if (response.user) {
       setUser(response.user);

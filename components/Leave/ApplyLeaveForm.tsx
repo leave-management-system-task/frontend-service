@@ -91,10 +91,11 @@ export default function ApplyLeaveForm() {
 
     setLoading(true);
     try {
-      const document = data.documents && data.documents.length > 0 
-        ? data.documents[0] 
-        : undefined;
-      
+      const document =
+        data.documents && data.documents.length > 0
+          ? data.documents[0]
+          : undefined;
+
       await leaveService.createLeaveRequest({
         leaveTypeId: data.leaveType,
         startDate: data.startDate.toISOString().split("T")[0],

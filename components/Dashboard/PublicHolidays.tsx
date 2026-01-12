@@ -18,7 +18,9 @@ export default function PublicHolidays() {
 
   const loadHolidays = async () => {
     try {
-      const response = await leaveService.getUpcomingPublicHolidays({ size: 5 });
+      const response = await leaveService.getUpcomingPublicHolidays({
+        size: 5,
+      });
       setHolidays(response.content);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));

@@ -47,7 +47,9 @@ export default function ReportGenerator() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success(`Report downloaded successfully as ${format.toUpperCase()}`);
+      toast.success(
+        `Report downloaded successfully as ${format.toUpperCase()}`
+      );
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -61,7 +63,9 @@ export default function ReportGenerator() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6">Generate Report</h2>
+      <h2 className="text-2xl font-bold mb-6 text-slate-800">
+        Generate Report
+      </h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -71,7 +75,7 @@ export default function ReportGenerator() {
             <input
               type="date"
               {...register("startDate")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white"
             />
           </div>
           <div>
@@ -81,7 +85,7 @@ export default function ReportGenerator() {
             <input
               type="date"
               {...register("endDate")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white"
             />
           </div>
         </div>
@@ -92,7 +96,7 @@ export default function ReportGenerator() {
           <input
             type="text"
             {...register("employeeId")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white placeholder:text-slate-400"
             placeholder="Leave empty for all employees"
           />
         </div>
@@ -103,7 +107,7 @@ export default function ReportGenerator() {
           <input
             type="text"
             {...register("leaveType")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white placeholder:text-slate-400"
             placeholder="e.g., PERSONAL_TIME_OFF"
           />
         </div>
@@ -117,7 +121,9 @@ export default function ReportGenerator() {
           </button>
           <button
             type="button"
-            onClick={() => handleSubmit((data) => downloadReport("csv", data))()}
+            onClick={() =>
+              handleSubmit((data) => downloadReport("csv", data))()
+            }
             disabled={loading}
             className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
           >

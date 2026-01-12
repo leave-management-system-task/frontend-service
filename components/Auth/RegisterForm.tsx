@@ -9,20 +9,13 @@ import { getErrorMessage } from "@/utils/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 interface RegisterFormData {
   email: string;
   password: string;
   confirmPassword: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  phoneNumber: string;
 }
 
 export default function RegisterForm() {
@@ -49,8 +42,8 @@ export default function RegisterForm() {
       await registerUser(
         data.email,
         data.password,
-        data.firstName,
-        data.lastName
+        data.fullName,
+        data.phoneNumber
       );
       toast.success("Registration successful!");
       router.push("/dashboard");
@@ -62,107 +55,137 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">Create Account</CardTitle>
-        <CardDescription className="text-center">
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-slate-800">Create Account</h2>
+        <p className="text-sm text-slate-600 mt-1">
           Enter your information to create a new account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                type="text"
-                {...register("firstName", {
-                  required: "First name is required",
-                })}
-                placeholder="John"
-              />
-              {errors.firstName && (
-                <p className="text-sm text-destructive">
-                  {errors.firstName.message}
-                </p>
-              )}
-            </div>
+        </p>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="fullName">
+            Full Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="fullName"
+            type="text"
+            {...register("fullName", {
+              required: "Full name is required",
+              minLength: {
+                value: 2,
+                message: "Full name must be at least 2 characters",
+              },
+            })}
+            placeholder="John Doe"
+          />
+          {errors.fullName && (
+            <p className="text-sm text-destructive">
+              {errors.fullName.message}
+            </p>
+          )}
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                type="text"
-                {...register("lastName", { required: "Last name is required" })}
-                placeholder="Doe"
-              />
-              {errors.lastName && (
-                <p className="text-sm text-destructive">
-                  {errors.lastName.message}
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Please enter a valid email address",
+              },
+            })}
+            placeholder="name@example.com"
+          />
+          {errors.email && (
+            <p className="text-sm text-destructive">{errors.email.message}</p>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email", { required: "Email is required" })}
-              placeholder="name@example.com"
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber">
+            Phone Number <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="phoneNumber"
+            type="tel"
+            {...register("phoneNumber", {
+              required: "Phone number is required",
+              pattern: {
+                value: /^\+2507[2389]\d{7}$/,
+                message:
+                  "Invalid phone number format. Must be a valid Rwandan number starting with +2507",
+              },
+            })}
+            placeholder="+250788123456"
+          />
+          {errors.phoneNumber && (
+            <p className="text-sm text-destructive">
+              {errors.phoneNumber.message}
+            </p>
+          )}
+          <p className="text-xs text-slate-500">
+            Format: +2507[2,3,8,9] followed by 7 digits (e.g., +250788123456)
+          </p>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                  value: 8,
-                  message: "Password must be at least 8 characters",
-                },
-              })}
-              placeholder="Enter your password"
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">
+            Password <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            {...register("password", {
+              required: "Password is required",
+              minLength: {
+                value: 8,
+                message: "Password must be at least 8 characters",
+              },
+            })}
+            placeholder="Enter your password"
+          />
+          {errors.password && (
+            <p className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              {...register("confirmPassword", {
-                required: "Please confirm your password",
-                validate: (value) =>
-                  value === password || "Passwords do not match",
-              })}
-              placeholder="Confirm your password"
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
-                {errors.confirmPassword.message}
-              </p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">
+            Confirm Password <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            {...register("confirmPassword", {
+              required: "Please confirm your password",
+              validate: (value) =>
+                value === password || "Passwords do not match",
+            })}
+            placeholder="Confirm your password"
+          />
+          {errors.confirmPassword && (
+            <p className="text-sm text-destructive">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <Button
+          type="submit"
+          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md"
+          disabled={loading}
+        >
+          {loading ? "Registering..." : "Create Account"}
+        </Button>
+      </form>
+    </div>
   );
 }

@@ -41,8 +41,12 @@ export default function LeaveBalanceAdjustment() {
     try {
       const allUsers = await userService.getAllUsers();
       setUsers(allUsers);
-    } catch {
-      toast.error("Failed to load users");
+      if (allUsers.length === 0) {
+        toast.error("No users found");
+      }
+    } catch (error: unknown) {
+      console.error("Failed to load users:", error);
+      toast.error(getErrorMessage(error) || "Failed to load users");
     }
   };
 
@@ -86,7 +90,9 @@ export default function LeaveBalanceAdjustment() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6">Adjust Leave Balance</h2>
+      <h2 className="text-2xl font-bold mb-6 text-slate-800">
+        Adjust Leave Balance
+      </h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -94,7 +100,7 @@ export default function LeaveBalanceAdjustment() {
           </label>
           <select
             {...register("userId", { required: true })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white"
           >
             <option value="">Select employee</option>
             {users.map((user) => (
@@ -110,15 +116,15 @@ export default function LeaveBalanceAdjustment() {
               Leave Balance
             </label>
             {loadingBalances ? (
-              <p className="text-sm text-gray-500">Loading balances...</p>
+              <p className="text-sm text-slate-700">Loading balances...</p>
             ) : balances.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-700">
                 No leave balances found for this user
               </p>
             ) : (
               <select
                 {...register("balanceId", { required: true })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white"
               >
                 <option value="">Select leave balance</option>
                 {balances.map((balance) => (
@@ -142,7 +148,7 @@ export default function LeaveBalanceAdjustment() {
               required: true,
               valueAsNumber: true,
             })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white placeholder:text-slate-400"
             placeholder="e.g., 5.0 or -2.5"
           />
         </div>
@@ -153,7 +159,7 @@ export default function LeaveBalanceAdjustment() {
           <textarea
             {...register("reason", { required: true })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-slate-900 bg-white placeholder:text-slate-400"
             placeholder="Reason for adjustment"
           />
         </div>

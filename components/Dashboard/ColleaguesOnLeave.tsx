@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { leaveService } from "@/lib/api/leave";
 import { LeaveApplication } from "@/types";
 import { formatDate } from "@/utils/dateUtils";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/utils/errorUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUserNames } from "@/hooks/useUserNames";
 
 export default function ColleaguesOnLeave() {
   const [colleagues, setColleagues] = useState<LeaveApplication[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Memoize userIds to prevent creating new array on every render
+  const userIds = useMemo(() => {
+    return colleagues.map((colleague) => colleague.userId).filter(Boolean);
+  }, [colleagues]);
+
+  const { getUserName, loading: namesLoading } = useUserNames(userIds);
 
   useEffect(() => {
     loadColleagues();
@@ -29,25 +37,25 @@ export default function ColleaguesOnLeave() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="border-slate-200 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
           <CardTitle>Colleagues on Leave</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-[var(--color-muted-foreground)]">Loading...</p>
+          <p className="text-slate-500">Loading...</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-slate-200 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
         <CardTitle>Colleagues on Leave</CardTitle>
       </CardHeader>
       <CardContent>
         {colleagues.length === 0 ? (
-          <p className="text-[var(--color-muted-foreground)]">
+          <p className="text-slate-500 text-center py-4">
             No colleagues currently on leave
           </p>
         ) : (
@@ -55,15 +63,20 @@ export default function ColleaguesOnLeave() {
             {colleagues.map((colleague) => (
               <div
                 key={colleague.id}
-                className="border-b border-[var(--color-border)] pb-3 last:border-0"
+                className="border-b border-slate-200 pb-3 last:border-0"
               >
-                <p className="font-medium">{colleague.employeeName || "Unknown"}</p>
-                <p className="text-sm text-[var(--color-muted-foreground)]">
+                <p className="font-medium text-slate-800">
+                  {namesLoading ? "Loading..." : getUserName(colleague.userId)}
+                </p>
+                <p className="text-sm text-slate-600">
                   {formatDate(colleague.startDate)} -{" "}
                   {formatDate(colleague.endDate)}
                 </p>
-                <p className="text-xs text-[var(--color-muted-foreground)]">
-                  {colleague.leaveTypeName || (colleague.leaveType ? colleague.leaveType.replace(/_/g, " ").toLowerCase() : "N/A")}
+                <p className="text-xs text-slate-500">
+                  {colleague.leaveTypeName ||
+                    (colleague.leaveType
+                      ? colleague.leaveType.replace(/_/g, " ").toLowerCase()
+                      : "N/A")}
                 </p>
               </div>
             ))}
