@@ -17,17 +17,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import TwoFactorVerificationModal from "./TwoFactorVerificationModal";
 
 interface LoginFormData {
   email: string;
   password: string;
-  twoFactorCode?: string;
 }
 
 export default function LoginForm() {
-  const { login } = useAuth();
+  const { login, verifyTwoFactorAfterLogin, pending2FA } = useAuth();
   const router = useRouter();
-  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const {
     register,
@@ -38,20 +39,33 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      await login(data.email, data.password, data.twoFactorCode);
-      toast.success("Login successful!");
-      router.push("/dashboard");
+      const result = await login(data.email, data.password);
+      
+      if (result.requiresTwoFactor) {
+        // Show 2FA modal instead of inline field
+        setUserEmail(result.userEmail || data.email);
+        setShow2FAModal(true);
+        toast.success("Please verify your 2FA code to complete login");
+      } else {
+        // Login successful, redirect
+        toast.success("Login successful!");
+        router.push("/dashboard");
+      }
     } catch (error: unknown) {
+      // Handle Axios errors
       if (error instanceof AxiosError) {
         const response = error.response?.data as
           | (ApiErrorResponse & { requiresTwoFactor?: boolean })
           | undefined;
         if (response?.requiresTwoFactor) {
-          setRequiresTwoFactor(true);
+          setUserEmail(data.email);
+          setShow2FAModal(true);
           toast.error("Please enter your 2FA code");
         } else {
           toast.error(response?.message || "Login failed");
         }
+      } else if (error instanceof Error) {
+        toast.error(error.message || "Login failed");
       } else {
         toast.error("Login failed");
       }
@@ -60,71 +74,70 @@ export default function LoginForm() {
     }
   };
 
+  const handle2FAVerified = async () => {
+    setShow2FAModal(false);
+    toast.success("Login successful!");
+    router.push("/dashboard");
+  };
+
+  const handle2FACancel = () => {
+    setShow2FAModal(false);
+    // Optionally logout or clear state
+    toast.error("2FA verification cancelled");
+  };
+
   return (
-    <Card className="max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
-        <CardDescription className="text-center">
-          Enter your credentials to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email", { required: "Email is required" })}
-              placeholder="name@example.com"
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register("password", { required: "Password is required" })}
-              placeholder="Enter your password"
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {requiresTwoFactor && (
+    <>
+      <Card className="max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Login</CardTitle>
+          <CardDescription className="text-center">
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="twoFactorCode">
-                Two-Factor Authentication Code
-              </Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="twoFactorCode"
-                type="text"
-                {...register("twoFactorCode", {
-                  required: "2FA code is required",
-                })}
-                placeholder="Enter 6-digit code"
-                maxLength={6}
+                id="email"
+                type="email"
+                {...register("email", { required: "Email is required" })}
+                placeholder="name@example.com"
               />
-              {errors.twoFactorCode && (
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                {...register("password", { required: "Password is required" })}
+                placeholder="Enter your password"
+              />
+              {errors.password && (
                 <p className="text-sm text-destructive">
-                  {errors.twoFactorCode.message}
+                  {errors.password.message}
                 </p>
               )}
             </div>
-          )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <TwoFactorVerificationModal
+        open={show2FAModal || pending2FA}
+        onVerified={handle2FAVerified}
+        onCancel={handle2FACancel}
+        userEmail={userEmail}
+      />
+    </>
   );
 }

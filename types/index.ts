@@ -13,10 +13,11 @@ export enum LeaveType {
 }
 
 export enum LeaveStatus {
-  PENDING = "PENDING",
+  REQUESTED = "REQUESTED",
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
   CANCELLED = "CANCELLED",
+  PENDING = "PENDING", // Keep for backward compatibility
 }
 
 export interface User {
@@ -31,25 +32,47 @@ export interface User {
 }
 
 export interface LeaveBalance {
-  leaveType: LeaveType;
-  totalDays: number;
+  id: string;
+  userId: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  year: number;
+  totalAllocated: number;
   usedDays: number;
+  pendingDays: number;
   availableDays: number;
-  carryoverDays: number;
+  carriedOverDays: number;
+  accruedDays: number;
+  lastAccrualDate?: string;
+  // Legacy fields for backward compatibility
+  leaveType?: LeaveType;
+  totalDays?: number;
+  carryoverDays?: number;
   expiresAt?: string;
 }
 
 export interface LeaveApplication {
   id: string;
-  employeeId: string;
-  employeeName: string;
-  leaveType: LeaveType;
+  userId: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
   startDate: string;
   endDate: string;
-  days: number;
+  numberOfDays: number;
   reason?: string;
   status: LeaveStatus;
-  submittedAt: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewerComment?: string;
+  documentUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Legacy fields for backward compatibility
+  employeeId?: string;
+  employeeName?: string;
+  leaveType?: LeaveType;
+  days?: number;
+  submittedAt?: string;
   documents?: string[];
   approverId?: string;
   approverName?: string;
@@ -61,18 +84,26 @@ export interface LeaveApplication {
 export interface LeaveTypeConfig {
   id: string;
   name: string;
-  code: LeaveType;
-  maxDays: number;
+  description?: string;
+  annualAllocation: number;
   accrualRate: number;
   requiresDocument: boolean;
   requiresReason: boolean;
+  maxCarryoverDays?: number;
+  carryoverExpiryMonth?: number;
+  carryoverExpiryDay?: number;
   isActive: boolean;
+  // Legacy fields for backward compatibility
+  code?: LeaveType;
+  maxDays?: number;
 }
 
 export interface PublicHoliday {
   id: string;
   name: string;
   date: string;
+  year?: number;
+  description?: string;
   isRecurring: boolean;
 }
 
@@ -94,4 +125,44 @@ export interface LeaveReport {
   usedDays: number;
   availableDays: number;
   applications: LeaveApplication[];
+}
+
+// API Response wrapper
+export interface ApiResponse<T> {
+  message: string;
+  status: string;
+  data: T;
+}
+
+// Paginated response
+export interface PageResponse<T> {
+  totalPages: number;
+  totalElements: number;
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  first: boolean;
+  last: boolean;
+  size: number;
+  content: T[];
+  number: number;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+// Leave Request Filter
+export interface LeaveRequestFilter {
+  userId?: string;
+  leaveTypeId?: string;
+  status?: LeaveStatus;
+  startDate?: string;
+  endDate?: string;
+  year?: number;
+}
+
+// Review Leave Request DTO
+export interface ReviewLeaveRequestDTO {
+  decision: "APPROVE" | "REJECT";
+  comment?: string;
 }

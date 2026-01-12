@@ -9,11 +9,15 @@ import { getErrorMessage } from "@/utils/errorUtils";
 
 interface LeaveTypeFormData {
   name: string;
-  code: string;
-  maxDays: number;
-  accrualRate: number;
+  description?: string;
+  annualAllocation?: number;
+  accrualRate?: number;
   requiresDocument: boolean;
   requiresReason: boolean;
+  maxCarryoverDays?: number;
+  carryoverExpiryMonth?: number;
+  carryoverExpiryDay?: number;
+  isActive?: boolean;
 }
 
 export default function LeaveTypeManager() {
@@ -39,10 +43,23 @@ export default function LeaveTypeManager() {
   const onSubmit = async (data: LeaveTypeFormData) => {
     try {
       if (editingType) {
-        await leaveService.updateLeaveType(editingType.id, data);
+        await leaveService.updateLeaveType(editingType.id, {
+          ...data,
+          isActive: data.isActive ?? editingType.isActive,
+        });
         toast.success("Leave type updated successfully");
       } else {
-        await leaveService.createLeaveType(data);
+        await leaveService.createLeaveType({
+          name: data.name,
+          description: data.description,
+          annualAllocation: data.annualAllocation,
+          accrualRate: data.accrualRate,
+          requiresDocument: data.requiresDocument,
+          requiresReason: data.requiresReason,
+          maxCarryoverDays: data.maxCarryoverDays,
+          carryoverExpiryMonth: data.carryoverExpiryMonth,
+          carryoverExpiryDay: data.carryoverExpiryDay,
+        });
         toast.success("Leave type created successfully");
       }
       reset();
@@ -57,11 +74,15 @@ export default function LeaveTypeManager() {
   const handleEdit = (type: LeaveTypeConfig) => {
     setEditingType(type);
     setValue("name", type.name);
-    setValue("code", type.code);
-    setValue("maxDays", type.maxDays);
-    setValue("accrualRate", type.accrualRate);
+    setValue("description", type.description || "");
+    setValue("annualAllocation", type.annualAllocation || type.maxDays || 0);
+    setValue("accrualRate", type.accrualRate || 0);
     setValue("requiresDocument", type.requiresDocument);
     setValue("requiresReason", type.requiresReason);
+    setValue("maxCarryoverDays", type.maxCarryoverDays || 0);
+    setValue("carryoverExpiryMonth", type.carryoverExpiryMonth || 0);
+    setValue("carryoverExpiryDay", type.carryoverExpiryDay || 0);
+    setValue("isActive", type.isActive);
     setShowForm(true);
   };
 
@@ -100,39 +121,34 @@ export default function LeaveTypeManager() {
             {editingType ? "Edit Leave Type" : "Create Leave Type"}
           </h3>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  {...register("name", { required: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Code
-                </label>
-                <input
-                  type="text"
-                  {...register("code", { required: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                {...register("name", { required: true })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                {...register("description")}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Max Days
+                  Annual Allocation (days)
                 </label>
                 <input
                   type="number"
-                  {...register("maxDays", {
-                    required: true,
-                    valueAsNumber: true,
-                  })}
+                  {...register("annualAllocation", { valueAsNumber: true })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -143,10 +159,43 @@ export default function LeaveTypeManager() {
                 <input
                   type="number"
                   step="0.01"
-                  {...register("accrualRate", {
-                    required: true,
-                    valueAsNumber: true,
-                  })}
+                  {...register("accrualRate", { valueAsNumber: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Max Carryover Days
+                </label>
+                <input
+                  type="number"
+                  {...register("maxCarryoverDays", { valueAsNumber: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Carryover Expiry Month
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  {...register("carryoverExpiryMonth", { valueAsNumber: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Carryover Expiry Day
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  {...register("carryoverExpiryDay", { valueAsNumber: true })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -158,7 +207,7 @@ export default function LeaveTypeManager() {
                   {...register("requiresDocument")}
                   className="mr-2"
                 />
-                Requires Document
+                Requires Document <span className="text-red-500">*</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -166,8 +215,18 @@ export default function LeaveTypeManager() {
                   {...register("requiresReason")}
                   className="mr-2"
                 />
-                Requires Reason
+                Requires Reason <span className="text-red-500">*</span>
               </label>
+              {editingType && (
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    {...register("isActive")}
+                    className="mr-2"
+                  />
+                  Active
+                </label>
+              )}
             </div>
             <div className="flex space-x-3">
               <button
@@ -200,10 +259,10 @@ export default function LeaveTypeManager() {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Code
+                Description
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Max Days
+                Annual Allocation
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Accrual Rate
@@ -222,11 +281,11 @@ export default function LeaveTypeManager() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {type.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {type.code}
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {type.description || "-"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {type.maxDays}
+                  {type.annualAllocation || type.maxDays || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {type.accrualRate} days/month

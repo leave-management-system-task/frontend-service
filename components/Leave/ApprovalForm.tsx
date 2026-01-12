@@ -26,9 +26,9 @@ export default function ApprovalForm({
   const handleApprove = async (data: ApprovalFormData) => {
     setLoading(true);
     try {
-      await leaveService.updateApplicationStatus(application.id, {
-        status: LeaveStatus.APPROVED,
-        comments: data.comments,
+      await leaveService.reviewLeaveRequest(application.id, {
+        decision: "APPROVE",
+        comment: data.comments,
       });
       toast.success("Leave application approved");
       onApproved();
@@ -47,9 +47,9 @@ export default function ApprovalForm({
 
     setLoading(true);
     try {
-      await leaveService.updateApplicationStatus(application.id, {
-        status: LeaveStatus.REJECTED,
-        comments: data.comments,
+      await leaveService.reviewLeaveRequest(application.id, {
+        decision: "REJECT",
+        comment: data.comments,
       });
       toast.success("Leave application rejected");
       onApproved();

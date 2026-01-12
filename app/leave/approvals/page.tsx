@@ -32,8 +32,8 @@ export default function ApprovalsPage() {
 
   const loadPendingApprovals = async () => {
     try {
-      const data = await leaveService.getPendingApprovals();
-      setApplications(data);
+      const response = await leaveService.getPendingLeaveRequests();
+      setApplications(response.content);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {

@@ -91,13 +91,16 @@ export default function ApplyLeaveForm() {
 
     setLoading(true);
     try {
-      const documents = data.documents ? Array.from(data.documents) : [];
-      await leaveService.createApplication({
-        leaveType: data.leaveType,
+      const document = data.documents && data.documents.length > 0 
+        ? data.documents[0] 
+        : undefined;
+      
+      await leaveService.createLeaveRequest({
+        leaveTypeId: data.leaveType,
         startDate: data.startDate.toISOString().split("T")[0],
         endDate: data.endDate.toISOString().split("T")[0],
         reason: data.reason,
-        documents,
+        document,
       });
       toast.success("Leave application submitted successfully!");
       router.push("/leave/my");
@@ -136,7 +139,7 @@ export default function ApplyLeaveForm() {
               </SelectTrigger>
               <SelectContent>
                 {leaveTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.code}>
+                  <SelectItem key={type.id} value={type.id}>
                     {type.name}
                   </SelectItem>
                 ))}

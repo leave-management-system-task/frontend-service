@@ -18,13 +18,8 @@ export default function PublicHolidays() {
 
   const loadHolidays = async () => {
     try {
-      const data = await leaveService.getPublicHolidays();
-      // Filter to show only upcoming holidays
-      const upcoming = data
-        .filter((h) => new Date(h.date) >= new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, 5);
-      setHolidays(upcoming);
+      const response = await leaveService.getUpcomingPublicHolidays({ size: 5 });
+      setHolidays(response.content);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {

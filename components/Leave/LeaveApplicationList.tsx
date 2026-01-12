@@ -20,6 +20,7 @@ export default function LeaveApplicationList({
         return "bg-green-100 text-green-800";
       case LeaveStatus.REJECTED:
         return "bg-red-100 text-red-800";
+      case LeaveStatus.REQUESTED:
       case LeaveStatus.PENDING:
         return "bg-yellow-100 text-yellow-800";
       case LeaveStatus.CANCELLED:
@@ -76,14 +77,14 @@ export default function LeaveApplicationList({
                     {app.employeeName}
                   </td>
                 )}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                  {app.leaveType.replace(/_/g, " ").toLowerCase()}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {app.leaveTypeName || (app.leaveType ? app.leaveType.replace(/_/g, " ").toLowerCase() : "N/A")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(app.startDate)} - {formatDate(app.endDate)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {app.days}
+                  {app.numberOfDays || app.days || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -93,7 +94,7 @@ export default function LeaveApplicationList({
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(app.submittedAt)}
+                  {formatDate(app.createdAt || app.submittedAt || "")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <Link

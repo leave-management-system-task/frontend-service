@@ -8,11 +8,13 @@ import Cookies from "js-cookie";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  pending2FA: boolean;
   login: (
     email: string,
     password: string,
     twoFactorCode?: string
-  ) => Promise<void>;
+  ) => Promise<{ requiresTwoFactor: boolean; userEmail?: string }>;
+  verifyTwoFactorAfterLogin: (code: string) => Promise<void>;
   register: (
     email: string,
     password: string,
@@ -28,6 +30,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pending2FA, setPending2FA] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
 
   const refreshUser = async () => {
     try {
@@ -53,14 +57,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     twoFactorCode?: string
-  ) => {
+  ): Promise<{ requiresTwoFactor: boolean; userEmail?: string }> => {
     const response = await authService.login({
       email,
       password,
       twoFactorCode,
     });
+    
+    // If 2FA is required but no code provided, return flag to show modal
+    if (response.requiresTwoFactor && !twoFactorCode) {
+      setPending2FA(true);
+      setPendingEmail(email);
+      return { requiresTwoFactor: true, userEmail: email };
+    }
+    
+    // If 2FA was provided and login succeeded
     if (response.user) {
       setUser(response.user);
+      setPending2FA(false);
+      setPendingEmail("");
+      return { requiresTwoFactor: false };
+    }
+    
+    throw new Error("Login failed: No user data received");
+  };
+
+  const verifyTwoFactorAfterLogin = async (code: string) => {
+    if (!pendingEmail) {
+      throw new Error("Email is required for 2FA verification");
+    }
+    const response = await authService.verifyTwoFactorAfterLogin(
+      pendingEmail,
+      code
+    );
+    if (response.user) {
+      setUser(response.user);
+      setPending2FA(false);
+      setPendingEmail("");
+    } else {
+      throw new Error("2FA verification failed");
     }
   };
 
@@ -88,7 +123,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refreshUser }}
+      value={{
+        user,
+        loading,
+        pending2FA,
+        login,
+        verifyTwoFactorAfterLogin,
+        register,
+        logout,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -39,16 +39,16 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [balances, applications] = await Promise.all([
-        leaveService.getLeaveBalance(),
-        leaveService.getMyApplications(),
+      const [balancesResponse, applicationsResponse] = await Promise.all([
+        leaveService.getMyLeaveBalances({ size: 100 }),
+        leaveService.getMyLeaveRequests({ size: 10 }),
       ]);
-      setLeaveBalances(balances);
+      setLeaveBalances(balancesResponse.content);
       setRecentApplications(
-        applications.sort(
+        applicationsResponse.content.sort(
           (a, b) =>
-            new Date(b.submittedAt).getTime() -
-            new Date(a.submittedAt).getTime()
+            new Date(b.createdAt || b.submittedAt || "").getTime() -
+            new Date(a.createdAt || a.submittedAt || "").getTime()
         )
       );
     } catch (error: unknown) {
@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {leaveBalances.map((balance) => (
-            <LeaveBalanceCard key={balance.leaveType} balance={balance} />
+            <LeaveBalanceCard key={balance.id || balance.leaveTypeId} balance={balance} />
           ))}
         </div>
 

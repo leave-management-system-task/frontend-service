@@ -3,25 +3,39 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { leaveService, userService } from "@/lib/api";
-import { User } from "@/types";
+import { User, LeaveBalance } from "@/types";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/utils/errorUtils";
 
 interface AdjustmentFormData {
-  employeeId: string;
-  leaveType: string;
-  days: number;
+  userId: string;
+  balanceId: string;
+  adjustmentAmount: number;
   reason: string;
 }
 
 export default function LeaveBalanceAdjustment() {
   const [users, setUsers] = useState<User[]>([]);
+  const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, reset } = useForm<AdjustmentFormData>();
+  const [loadingBalances, setLoadingBalances] = useState(false);
+  const { register, handleSubmit, reset, watch, setValue } =
+    useForm<AdjustmentFormData>();
+
+  const selectedUserId = watch("userId");
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      loadUserBalances(selectedUserId);
+    } else {
+      setBalances([]);
+      setValue("balanceId", "");
+    }
+  }, [selectedUserId, setValue]);
 
   const loadUsers = async () => {
     try {
@@ -32,12 +46,37 @@ export default function LeaveBalanceAdjustment() {
     }
   };
 
+  const loadUserBalances = async (userId: string) => {
+    setLoadingBalances(true);
+    try {
+      const response = await leaveService.getUserLeaveBalances(userId, {
+        size: 100,
+      });
+      setBalances(response.content);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+      setBalances([]);
+    } finally {
+      setLoadingBalances(false);
+    }
+  };
+
   const onSubmit = async (data: AdjustmentFormData) => {
+    if (!data.balanceId) {
+      toast.error("Please select a leave balance");
+      return;
+    }
     setLoading(true);
     try {
-      await leaveService.adjustLeaveBalance(data);
+      await leaveService.adjustLeaveBalance(data.balanceId, {
+        adjustmentAmount: data.adjustmentAmount,
+        reason: data.reason,
+      });
       toast.success("Leave balance adjusted successfully");
       reset();
+      if (data.userId) {
+        loadUserBalances(data.userId);
+      }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -54,7 +93,7 @@ export default function LeaveBalanceAdjustment() {
             Employee
           </label>
           <select
-            {...register("employeeId", { required: true })}
+            {...register("userId", { required: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
             <option value="">Select employee</option>
@@ -65,26 +104,46 @@ export default function LeaveBalanceAdjustment() {
             ))}
           </select>
         </div>
+        {selectedUserId && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Leave Balance
+            </label>
+            {loadingBalances ? (
+              <p className="text-sm text-gray-500">Loading balances...</p>
+            ) : balances.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No leave balances found for this user
+              </p>
+            ) : (
+              <select
+                {...register("balanceId", { required: true })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select leave balance</option>
+                {balances.map((balance) => (
+                  <option key={balance.id} value={balance.id}>
+                    {balance.leaveTypeName} ({balance.year}) - Available:{" "}
+                    {balance.availableDays} days
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Leave Type
-          </label>
-          <input
-            type="text"
-            {...register("leaveType", { required: true })}
-            placeholder="e.g., PERSONAL_TIME_OFF"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Days (positive to add, negative to subtract)
+            Adjustment Amount (positive to add, negative to subtract)
           </label>
           <input
             type="number"
             step="0.01"
-            {...register("days", { required: true, valueAsNumber: true })}
+            {...register("adjustmentAmount", {
+              required: true,
+              valueAsNumber: true,
+            })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="e.g., 5.0 or -2.5"
           />
         </div>
         <div>

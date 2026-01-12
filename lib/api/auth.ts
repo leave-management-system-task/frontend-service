@@ -2,10 +2,9 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import { User, UserRole } from "@/types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ||
-  "http://localhost:8822/api/v1/auth";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Single axios instance for all API calls
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -13,14 +12,39 @@ const api = axios.create({
   },
 });
 
-// Add token to requests
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = Cookies.get("token");
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const publicEndpoints = ["/auth/login", "/auth/register", "/auth/verify-2fa"];
+
+  const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+    config.url?.includes(endpoint)
+  );
+
+  if (isPublicEndpoint) {
+    if (config.headers) {
+      delete config.headers.Authorization;
+    }
+  } else {
+    const token = Cookies.get("token");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      Cookies.remove("token");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export interface LoginRequest {
   email: string;
@@ -33,11 +57,12 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  phoneNumber?: string;
 }
 
 // API Response structure
 interface ApiLoginResponseData {
-  accessToken: string;
+  accessToken: string | null;
   user: {
     id: string;
     fullName: string;
@@ -55,9 +80,12 @@ interface ApiLoginResponseData {
     credentialsNonExpired: boolean;
     enabled: boolean;
     username: string;
+    twoFactorEnabled: boolean;
     [key: string]: unknown;
-  };
-  tokenType: string;
+  } | null;
+  tokenType: string | null;
+  requiresTwoFactor?: boolean;
+  message?: string;
 }
 
 interface ApiResponse<T> {
@@ -68,20 +96,20 @@ interface ApiResponse<T> {
 
 export interface LoginResponse {
   token: string;
-  user: User;
+  user: User | null;
   requiresTwoFactor: boolean;
-  twoFactorSecret?: string;
-  qrCodeUrl?: string;
+  message?: string;
 }
 
-// Helper function to map API user to User interface
 function mapApiUserToUser(apiUser: ApiLoginResponseData["user"]): User {
-  // Extract firstName and lastName from fullName
+  if (!apiUser) {
+    throw new Error("User data is missing");
+  }
+
   const nameParts = apiUser.fullName.trim().split(/\s+/);
   const firstName = nameParts[0] || "";
   const lastName = nameParts.slice(1).join(" ") || "";
 
-  // Extract role from roles array (take the first role, or default to STAFF)
   const roleName = apiUser.roles?.[0]?.name || "STAFF";
   let role: UserRole;
   switch (roleName.toUpperCase()) {
@@ -104,24 +132,26 @@ function mapApiUserToUser(apiUser: ApiLoginResponseData["user"]): User {
     firstName,
     lastName,
     role,
-    twoFactorEnabled: false
+    twoFactorEnabled: apiUser.twoFactorEnabled || false,
   };
 }
 
 export const authService = {
   async register(data: RegisterRequest): Promise<LoginResponse> {
     const response = await api.post<ApiResponse<ApiLoginResponseData>>(
-      "/register",
+      "/auth/register",
       data
     );
     const responseData = response.data.data;
 
-    if (responseData.accessToken) {
-      Cookies.set("token", responseData.accessToken, { expires: 7 });
+    if (!responseData.accessToken || !responseData.user) {
+      throw new Error("Registration failed: Missing token or user data");
     }
 
+    Cookies.set("token", responseData.accessToken, { expires: 7 });
+
     return {
-      token: responseData.accessToken,
+      token: responseData.accessToken, // TypeScript knows it's not null here
       user: mapApiUserToUser(responseData.user),
       requiresTwoFactor: false,
     };
@@ -129,32 +159,67 @@ export const authService = {
 
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await api.post<ApiResponse<ApiLoginResponseData>>(
-      "/login",
+      "/auth/login",
       data
     );
     const responseData = response.data.data;
 
-    if (responseData.accessToken) {
-      Cookies.set("token", responseData.accessToken, { expires: 7 });
+    // If 2FA is required but no code provided, allow login to proceed
+    // The user will verify 2FA in a modal after login
+    if (responseData.requiresTwoFactor && !data.twoFactorCode) {
+      // Store a temporary token if provided, or proceed without token
+      // The backend should allow this and provide a way to verify 2FA later
+      return {
+        token: responseData.accessToken || "",
+        user: null as unknown as User,
+        requiresTwoFactor: true,
+        message:
+          responseData.message || "Two-factor authentication code required",
+      };
     }
 
-    return {
-      token: responseData.accessToken,
-      user: mapApiUserToUser(responseData.user),
-      requiresTwoFactor: false,
-    };
+    // If 2FA code was provided and verification failed, throw error
+    if (responseData.requiresTwoFactor && data.twoFactorCode) {
+      throw new Error("Invalid 2FA code");
+    }
+
+    if (responseData.accessToken && responseData.user) {
+      Cookies.set("token", responseData.accessToken, { expires: 7 });
+      return {
+        token: responseData.accessToken,
+        user: mapApiUserToUser(responseData.user),
+        requiresTwoFactor: false,
+      };
+    }
+
+    throw new Error(responseData.message || "Login failed");
   },
 
-  async verifyTwoFactor(code: string): Promise<LoginResponse> {
+  async verifyTwoFactor(email: string, code: string): Promise<LoginResponse> {
+    // Validate inputs
+    if (!email || !email.trim()) {
+      throw new Error("Email is required for 2FA verification");
+    }
+    if (!code || code.length !== 6) {
+      throw new Error("2FA code must be 6 digits");
+    }
+
+    const existingToken = Cookies.get("token");
+    if (existingToken) {
+      Cookies.remove("token");
+    }
+
     const response = await api.post<ApiResponse<ApiLoginResponseData>>(
-      "/verify-2fa",
-      { code }
+      "/auth/verify-2fa",
+      { email: email.trim(), code }
     );
     const responseData = response.data.data;
 
-    if (responseData.accessToken) {
-      Cookies.set("token", responseData.accessToken, { expires: 7 });
+    if (!responseData.accessToken || !responseData.user) {
+      throw new Error(responseData.message || "2FA verification failed");
     }
+
+    Cookies.set("token", responseData.accessToken, { expires: 7 });
 
     return {
       token: responseData.accessToken,
@@ -163,20 +228,47 @@ export const authService = {
     };
   },
 
-  async enableTwoFactor(): Promise<{ secret: string; qrCodeUrl: string }> {
-    const response = await api.post<{ secret: string; qrCodeUrl: string }>(
-      "/2fa/enable"
-    );
-    return response.data;
+  async enableTwoFactor(): Promise<{
+    message: string;
+    enabled: boolean;
+    qrCodeUrl?: string;
+    secret?: string;
+  }> {
+    const response = await api.post<
+      ApiResponse<{
+        message: string;
+        enabled: boolean;
+        qrCodeUrl?: string;
+        secret?: string;
+      }>
+    >("/auth/2fa/enable");
+    return response.data.data;
+  },
+
+  async verifyAndEnableTwoFactor(
+    code: string
+  ): Promise<{ message: string; enabled: boolean }> {
+    const response = await api.post<
+      ApiResponse<{ message: string; enabled: boolean }>
+    >("/auth/2fa/verify-enable", { code });
+    return response.data.data;
   },
 
   async disableTwoFactor(): Promise<void> {
-    await api.post("/2fa/disable");
+    await api.post("/auth/2fa/disable");
+  },
+
+  async verifyTwoFactorAfterLogin(
+    email: string,
+    code: string
+  ): Promise<LoginResponse> {
+    return this.verifyTwoFactor(email, code);
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await api.get<User>("/me");
-    return response.data;
+    const response =
+      await api.get<ApiResponse<ApiLoginResponseData["user"]>>("/users/me");
+    return mapApiUserToUser(response.data.data);
   },
 
   logout(): void {

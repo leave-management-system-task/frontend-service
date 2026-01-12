@@ -8,6 +8,8 @@ import LeaveTypeManager from "@/components/Admin/LeaveTypeManager";
 import LeaveBalanceAdjustment from "@/components/Admin/LeaveBalanceAdjustment";
 import ReportGenerator from "@/components/Admin/ReportGenerator";
 import { UserRole } from "@/types";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -46,12 +48,19 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-2">
-            <LeaveTypeManager />
+        <div className="space-y-6">
+          <div className="flex gap-4">
+            <Button asChild variant="outline">
+              <Link href="/admin/public-holidays">Manage Public Holidays</Link>
+            </Button>
           </div>
-          <LeaveBalanceAdjustment />
-          <ReportGenerator />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="lg:col-span-2">
+              <LeaveTypeManager />
+            </div>
+            <LeaveBalanceAdjustment />
+            <ReportGenerator />
+          </div>
         </div>
       </div>
     </Layout>

@@ -13,11 +13,15 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function TwoFactorSetup() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
+  const [verificationCode, setVerificationCode] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
@@ -37,8 +41,12 @@ export default function TwoFactorSetup() {
     setLoading(true);
     try {
       const response = await authService.enableTwoFactor();
-      setQrCodeUrl(response.qrCodeUrl);
-      setSecret(response.secret);
+      if (response.qrCodeUrl) {
+        setQrCodeUrl(response.qrCodeUrl);
+      }
+      if (response.secret) {
+        setSecret(response.secret);
+      }
       toast.success(
         "2FA enabled! Scan the QR code with your authenticator app."
       );
@@ -46,6 +54,35 @@ export default function TwoFactorSetup() {
       toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      toast.error("Please enter a valid 6-digit code");
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const response = await authService.verifyAndEnableTwoFactor(
+        verificationCode
+      );
+      if (response.enabled) {
+        setEnabled(true);
+        setQrCodeUrl("");
+        setSecret("");
+        setVerificationCode("");
+        toast.success(response.message || "2FA enabled successfully!");
+        // Refresh user data to get updated 2FA status
+        await checkTwoFactorStatus();
+      } else {
+        toast.error("Verification failed. Please try again.");
+      }
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -64,6 +101,7 @@ export default function TwoFactorSetup() {
       setEnabled(false);
       setQrCodeUrl("");
       setSecret("");
+      setVerificationCode("");
       toast.success("2FA disabled successfully");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
@@ -134,9 +172,41 @@ export default function TwoFactorSetup() {
               After scanning, enter the 6-digit code from your authenticator app
               to complete setup.
             </p>
-            <Button variant="destructive" onClick={handleDisable}>
-              Cancel Setup
-            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="verificationCode">
+                Verification Code
+              </Label>
+              <Input
+                id="verificationCode"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={verificationCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setVerificationCode(value);
+                }}
+                placeholder="000000"
+                className="text-center text-lg tracking-widest"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleVerify}
+                disabled={verifying || verificationCode.length !== 6}
+                className="flex-1"
+              >
+                {verifying ? "Verifying..." : "Verify & Complete Setup"}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDisable}
+                disabled={verifying}
+              >
+                Cancel Setup
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

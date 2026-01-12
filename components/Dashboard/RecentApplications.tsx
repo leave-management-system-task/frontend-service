@@ -23,6 +23,7 @@ export default function RecentApplications({
         return "default";
       case LeaveStatus.REJECTED:
         return "destructive";
+      case LeaveStatus.REQUESTED:
       case LeaveStatus.PENDING:
         return "secondary";
       default:
@@ -54,14 +55,14 @@ export default function RecentApplications({
               >
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <p className="font-medium capitalize">
-                      {app.leaveType.replace(/_/g, " ").toLowerCase()}
+                    <p className="font-medium">
+                      {app.leaveTypeName || (app.leaveType ? app.leaveType.replace(/_/g, " ").toLowerCase() : "N/A")}
                     </p>
                     <p className="text-sm text-[var(--color-muted-foreground)]">
                       {formatDate(app.startDate)} - {formatDate(app.endDate)}
                     </p>
                     <p className="text-sm text-[var(--color-muted-foreground)]">
-                      {app.days} days
+                      {app.numberOfDays || app.days || 0} days
                     </p>
                   </div>
                   <Badge variant={getStatusVariant(app.status)}>

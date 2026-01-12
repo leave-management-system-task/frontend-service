@@ -25,30 +25,22 @@ export default function LeaveDetailsPage() {
   }, [user, authLoading, router]);
 
   const loadApplication = useCallback(async () => {
+    if (!params.id || typeof params.id !== "string") {
+      toast.error("Invalid application ID");
+      router.push("/leave/my");
+      return;
+    }
+
     try {
-      const applications = await leaveService.getMyApplications();
-      const app = applications.find((a) => a.id === params.id);
-      if (!app) {
-        // Try pending approvals if not found in my applications
-        if (user?.role === UserRole.MANAGER || user?.role === UserRole.ADMIN) {
-          const pending = await leaveService.getPendingApprovals();
-          const pendingApp = pending.find((a) => a.id === params.id);
-          if (pendingApp) {
-            setApplication(pendingApp);
-            return;
-          }
-        }
-        toast.error("Application not found");
-        router.push("/leave/my");
-        return;
-      }
+      const app = await leaveService.getLeaveRequestById(params.id);
       setApplication(app);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
+      router.push("/leave/my");
     } finally {
       setLoading(false);
     }
-  }, [user, params.id, router]);
+  }, [params.id, router]);
 
   useEffect(() => {
     if (user && params.id) {
@@ -77,7 +69,7 @@ export default function LeaveDetailsPage() {
 
   const canApprove =
     (user.role === UserRole.MANAGER || user.role === UserRole.ADMIN) &&
-    application.status === LeaveStatus.PENDING;
+    (application.status === LeaveStatus.REQUESTED || application.status === LeaveStatus.PENDING);
 
   return (
     <Layout>
@@ -96,14 +88,16 @@ export default function LeaveDetailsPage() {
 
         <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Employee</p>
-              <p className="font-medium">{application.employeeName}</p>
-            </div>
+            {application.employeeName && (
+              <div>
+                <p className="text-sm text-gray-600">Employee</p>
+                <p className="font-medium">{application.employeeName}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-gray-600">Leave Type</p>
-              <p className="font-medium capitalize">
-                {application.leaveType.replace(/_/g, " ").toLowerCase()}
+              <p className="font-medium">
+                {application.leaveTypeName || (application.leaveType ? application.leaveType.replace(/_/g, " ").toLowerCase() : "N/A")}
               </p>
             </div>
             <div>
@@ -116,7 +110,7 @@ export default function LeaveDetailsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Days</p>
-              <p className="font-medium">{application.days}</p>
+              <p className="font-medium">{application.numberOfDays || application.days || 0}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Status</p>
@@ -126,7 +120,7 @@ export default function LeaveDetailsPage() {
                     ? "bg-green-100 text-green-800"
                     : application.status === LeaveStatus.REJECTED
                       ? "bg-red-100 text-red-800"
-                      : application.status === LeaveStatus.PENDING
+                      : application.status === LeaveStatus.REQUESTED || application.status === LeaveStatus.PENDING
                         ? "bg-yellow-100 text-yellow-800"
                         : "bg-gray-100 text-gray-800"
                 }`}
@@ -140,24 +134,37 @@ export default function LeaveDetailsPage() {
                 <p className="font-medium">{application.reason}</p>
               </div>
             )}
-            {application.approvalComments && (
+            {application.reviewerComment && (
               <div className="col-span-2">
-                <p className="text-sm text-gray-600">Approval Comments</p>
-                <p className="font-medium">{application.approvalComments}</p>
+                <p className="text-sm text-gray-600">Review Comments</p>
+                <p className="font-medium">{application.reviewerComment}</p>
               </div>
             )}
-            {application.approverName && (
+            {application.reviewedBy && (
               <div>
-                <p className="text-sm text-gray-600">Approved By</p>
-                <p className="font-medium">{application.approverName}</p>
+                <p className="text-sm text-gray-600">Reviewed By</p>
+                <p className="font-medium">{application.reviewedBy}</p>
               </div>
             )}
-            {application.approvedAt && (
+            {application.reviewedAt && (
               <div>
-                <p className="text-sm text-gray-600">Approved At</p>
+                <p className="text-sm text-gray-600">Reviewed At</p>
                 <p className="font-medium">
-                  {formatDate(application.approvedAt)}
+                  {formatDate(application.reviewedAt)}
                 </p>
+              </div>
+            )}
+            {application.documentUrl && (
+              <div className="col-span-2">
+                <p className="text-sm text-gray-600">Document</p>
+                <a
+                  href={application.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
+                  View Document
+                </a>
               </div>
             )}
           </div>

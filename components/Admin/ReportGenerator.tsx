@@ -18,21 +18,45 @@ export default function ReportGenerator() {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm<ReportFormData>();
 
-  const onSubmit = async (data: ReportFormData) => {
+  const downloadReport = async (
+    format: "excel" | "csv",
+    data: ReportFormData
+  ) => {
     setLoading(true);
     try {
-      const reports = await leaveService.generateReport(data);
-      if (reports.length === 0) {
-        toast.error("No data found for the selected criteria");
-        return;
-      }
-      exportLeaveReport(reports, `leave-report-${Date.now()}`);
-      toast.success("Report generated successfully");
+      const blob =
+        format === "excel"
+          ? await leaveService.downloadLeaveReportExcel({
+              year: data.startDate
+                ? new Date(data.startDate).getFullYear()
+                : undefined,
+              status: data.leaveType,
+            })
+          : await leaveService.downloadLeaveReportCSV({
+              year: data.startDate
+                ? new Date(data.startDate).getFullYear()
+                : undefined,
+              status: data.leaveType,
+            });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `leave-report-${Date.now()}.${format === "excel" ? "xlsx" : "csv"}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Report downloaded successfully as ${format.toUpperCase()}`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
+  };
+
+  const onSubmit = async (data: ReportFormData) => {
+    await downloadReport("excel", data);
   };
 
   return (
@@ -83,13 +107,23 @@ export default function ReportGenerator() {
             placeholder="e.g., PERSONAL_TIME_OFF"
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Generating..." : "Generate Excel Report"}
-        </button>
+        <div className="flex space-x-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Generating..." : "Download Excel"}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSubmit((data) => downloadReport("csv", data))()}
+            disabled={loading}
+            className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
+          >
+            {loading ? "Generating..." : "Download CSV"}
+          </button>
+        </div>
       </form>
     </div>
   );

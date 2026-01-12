@@ -18,8 +18,8 @@ export default function ColleaguesOnLeave() {
 
   const loadColleagues = async () => {
     try {
-      const data = await leaveService.getColleaguesOnLeave();
-      setColleagues(data);
+      const response = await leaveService.getCurrentlyOnLeave();
+      setColleagues(response.content);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -57,13 +57,13 @@ export default function ColleaguesOnLeave() {
                 key={colleague.id}
                 className="border-b border-[var(--color-border)] pb-3 last:border-0"
               >
-                <p className="font-medium">{colleague.employeeName}</p>
+                <p className="font-medium">{colleague.employeeName || "Unknown"}</p>
                 <p className="text-sm text-[var(--color-muted-foreground)]">
                   {formatDate(colleague.startDate)} -{" "}
                   {formatDate(colleague.endDate)}
                 </p>
-                <p className="text-xs text-[var(--color-muted-foreground)] capitalize">
-                  {colleague.leaveType.replace(/_/g, " ").toLowerCase()}
+                <p className="text-xs text-[var(--color-muted-foreground)]">
+                  {colleague.leaveTypeName || (colleague.leaveType ? colleague.leaveType.replace(/_/g, " ").toLowerCase() : "N/A")}
                 </p>
               </div>
             ))}
