@@ -45,8 +45,8 @@ export default function RegisterForm() {
         data.fullName,
         data.phoneNumber
       );
-      toast.success("Registration successful!");
-      router.push("/dashboard");
+      toast.success("Registration successful! Please login to continue.");
+      router.push("/login");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {

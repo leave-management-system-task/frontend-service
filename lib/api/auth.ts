@@ -2,9 +2,24 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import { User, UserRole } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const getApiBaseUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
 
-// Single axios instance for all API calls
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = hostname === "localhost" ? "8866" : "";
+    return port
+      ? `${protocol}//${hostname}:${port}`
+      : `${protocol}//${hostname}`;
+  }
+  return "http://localhost:8866";
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -13,7 +28,12 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const publicEndpoints = ["/auth/login", "/auth/register", "/auth/verify-2fa"];
+  const publicEndpoints = [
+    "/auth/login",
+    "/auth/register",
+    "/auth/verify-2fa",
+    "/users/register",
+  ];
 
   const isPublicEndpoint = publicEndpoints.some((endpoint) =>
     config.url?.includes(endpoint)
@@ -136,23 +156,13 @@ function mapApiUserToUser(apiUser: ApiLoginResponseData["user"]): User {
 }
 
 export const authService = {
-  async register(data: RegisterRequest): Promise<LoginResponse> {
-    const response = await api.post<ApiResponse<ApiLoginResponseData>>(
-      "/auth/register",
+  async register(data: RegisterRequest): Promise<{ message: string }> {
+    const response = await api.post<ApiResponse<{ message: string }>>(
+      "/users/register",
       data
     );
-    const responseData = response.data.data;
-
-    if (!responseData.accessToken || !responseData.user) {
-      throw new Error("Registration failed: Missing token or user data");
-    }
-
-    Cookies.set("token", responseData.accessToken, { expires: 7 });
-
     return {
-      token: responseData.accessToken, // TypeScript knows it's not null here
-      user: mapApiUserToUser(responseData.user),
-      requiresTwoFactor: false,
+      message: response.data.message || "Registration successful",
     };
   },
 
@@ -163,11 +173,7 @@ export const authService = {
     );
     const responseData = response.data.data;
 
-    // If 2FA is required but no code provided, allow login to proceed
-    // The user will verify 2FA in a modal after login
     if (responseData.requiresTwoFactor && !data.twoFactorCode) {
-      // Store a temporary token if provided, or proceed without token
-      // The backend should allow this and provide a way to verify 2FA later
       return {
         token: responseData.accessToken || "",
         user: null as unknown as User,
@@ -177,7 +183,6 @@ export const authService = {
       };
     }
 
-    // If 2FA code was provided and verification failed, throw error
     if (responseData.requiresTwoFactor && data.twoFactorCode) {
       throw new Error("Invalid 2FA code");
     }

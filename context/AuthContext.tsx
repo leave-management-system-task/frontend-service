@@ -105,15 +105,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     phoneNumber: string
   ) => {
-    const response = await authService.register({
+    await authService.register({
       email,
       password,
       fullName,
       phoneNumber,
     });
-    if (response.user) {
-      setUser(response.user);
-    }
+    // Registration doesn't return a token, user needs to login
   };
 
   const logout = () => {
