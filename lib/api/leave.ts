@@ -80,22 +80,7 @@ interface LeaveBalanceAdjustmentResponseDTO {
   createdAt: string;
 }
 
-const getApiBaseUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  if (typeof window !== "undefined") {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = hostname === "localhost" ? "8866" : "";
-    return port
-      ? `${protocol}//${hostname}:${port}`
-      : `${protocol}//${hostname}`;
-  }
-  return "http://localhost:8866";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,

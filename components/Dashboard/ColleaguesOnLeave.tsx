@@ -48,11 +48,11 @@ export default function ColleaguesOnLeave() {
     );
   }
 
-    return (
-      <Card className="border-slate-200 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
-          <CardTitle className="text-slate-800">Colleagues on Leave</CardTitle>
-        </CardHeader>
+  return (
+    <Card className="border-slate-200 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
+        <CardTitle className="text-slate-800">Colleagues on Leave</CardTitle>
+      </CardHeader>
       <CardContent>
         {colleagues.length === 0 ? (
           <p className="text-slate-500 text-center py-4">
