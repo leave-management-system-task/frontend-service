@@ -2,7 +2,8 @@ import axios, { InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import { User, UserRole } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") + "/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
