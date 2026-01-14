@@ -117,7 +117,7 @@ export default function LeaveTypeManager() {
 
       {showForm && (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">
+          <h3 className="text-lg font-semibold mb-4 text-slate-800">
             {editingType ? "Edit Leave Type" : "Create Leave Type"}
           </h3>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -128,7 +128,7 @@ export default function LeaveTypeManager() {
               <input
                 type="text"
                 {...register("name", { required: true })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
               />
             </div>
             <div>
@@ -138,7 +138,7 @@ export default function LeaveTypeManager() {
               <textarea
                 {...register("description")}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -149,7 +149,7 @@ export default function LeaveTypeManager() {
                 <input
                   type="number"
                   {...register("annualAllocation", { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
                 />
               </div>
               <div>
@@ -160,7 +160,7 @@ export default function LeaveTypeManager() {
                   type="number"
                   step="0.01"
                   {...register("accrualRate", { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
                 />
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function LeaveTypeManager() {
                 <input
                   type="number"
                   {...register("maxCarryoverDays", { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
                 />
               </div>
               <div>
@@ -184,7 +184,7 @@ export default function LeaveTypeManager() {
                   min="1"
                   max="12"
                   {...register("carryoverExpiryMonth", { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
                 />
               </div>
               <div>
@@ -196,7 +196,7 @@ export default function LeaveTypeManager() {
                   min="1"
                   max="31"
                   {...register("carryoverExpiryDay", { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-slate-900"
                 />
               </div>
             </div>

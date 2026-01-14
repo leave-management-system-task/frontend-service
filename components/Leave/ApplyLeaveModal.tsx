@@ -289,9 +289,9 @@ export default function ApplyLeaveModal({
                 selected={startDate}
                 onChange={handleStartDateChange}
                 minDate={new Date()}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-900 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 wrapperClassName="w-full"
-                customInput={<Input id="startDate" readOnly />}
+                customInput={<Input id="startDate" readOnly className="text-slate-900" />}
                 dateFormat="yyyy-MM-dd"
                 placeholderText="Select start date"
               />
@@ -310,9 +310,9 @@ export default function ApplyLeaveModal({
                 selected={endDate}
                 onChange={handleEndDateChange}
                 minDate={startDate || new Date()}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-900 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 wrapperClassName="w-full"
-                customInput={<Input id="endDate" readOnly />}
+                customInput={<Input id="endDate" readOnly className="text-slate-900" />}
                 dateFormat="yyyy-MM-dd"
                 placeholderText="Select end date"
               />
